@@ -18,12 +18,12 @@ app.get('/contact', (req, res) => {
     res.sendFile(__dirname + '/public/contact.html');
 });
 
-// Simplified route for the legal information page
+// route for the legal information page
 app.get('/legal', (req, res) => {
     res.sendFile(__dirname + '/public/legal.html');
 });
 
-// Simplified route for the 404 page
+// route for the 404 page
 app.get('/404', (req, res) => {
     res.sendFile(__dirname + '/public/404.html');
 });
