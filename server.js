@@ -4,6 +4,8 @@ const app = express()
 // if PORT in the .env is not set, PORT defaults to 3000
 const PORT = process.env.PORT || 3000
 
+app.use(express.static('public'))
+
 app.get('/', (req, res) => {
     res.send('Hello World')
 })
