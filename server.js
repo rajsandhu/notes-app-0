@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 // for form handling
 import fs from 'fs'
 import path from 'path'
+// for body parser
+import { json, urlencoded } from 'express'
 
 
 dotenv.config()
@@ -22,6 +24,10 @@ app.use(express.static('public'))
 
 // add logger functionality
 app.use(logger)
+
+// use built-in express body-parser middleware
+app.use(json())
+app.use(urlencoded({ extended: true }))
 
 // Route for the home page
 // app.get('/', (req, res) => {
@@ -57,6 +63,7 @@ app.get('/blog-entry', (req, res) => {
     res.sendFile(__dirname + '/public/blog-entry.html')
 })
 
+// route for posting a blog entry
 app.post('submit-blog', (req, res) => {
     // to use body-parser middleware to parse form data
     const { title, content } = req.body
