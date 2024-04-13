@@ -1,6 +1,11 @@
 import express from 'express'
 import { logger } from './middlewares/logger.js'
 import dotenv from 'dotenv'
+// for form handling
+import fs from 'fs'
+import path from 'path'
+
+
 dotenv.config()
 
 // require('dotenv').config()
@@ -50,6 +55,42 @@ app.get('/test', (req, res) => {
 // blog entry, initially for local storage of entered data
 app.get('/blog-entry', (req, res) => {
     res.sendFile(__dirname + '/public/blog-entry.html')
+})
+
+app.post('submit-blog', (req, res) => {
+    // to use body-parser middleware to parse form data
+    const { title, content } = req.body
+
+    // where the blog entry will be stored locally
+    const blogsPath = path.join(__dirname, 'blogs.json')
+
+    // read existing blog entries
+    fs.readFile(blogsPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error(err)
+            return res.status(500).send('Eorr reading blog entries')
+        }
+
+        // parse existing blog entries
+        let blogs = []
+        if (data) {
+            blogs = JSON.parse(data)
+        }
+
+        // add the new blog entry
+        blogs.push({ title, content })
+
+        // write the updated blog entries back to the file
+        fs.writeFile(blogsPath, JSON.stringify(blogs, null, 2), 'utf8', (err) => {
+            if (err) {
+                console.error(err)
+                return res.status(500).send('Error saving blog entry')
+            }
+
+            // redirect user to either a success page or back to the form
+            res.redirect('/blog-entry')
+        })
+    })
 })
 
 
