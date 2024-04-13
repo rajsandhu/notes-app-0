@@ -43,10 +43,15 @@ app.get('/404', (req, res) => {
 })
 
 // TEST ROUTE
-
 app.get('/test', (req, res) => {
     res.send('Test route')
 })
+
+// blog entry, initially for local storage of entered data
+app.get('/blog-entry', (req, res) => {
+    res.sendFile(__dirname + '/public/blog-entry.html')
+})
+
 
 // Catch-all route for handling 404 errors
 app.use((req, res) => {
