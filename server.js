@@ -7,6 +7,9 @@ import path from 'path'
 // for body parser
 import { json, urlencoded } from 'express'
 
+// modules to make __dirname work with import
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 
 dotenv.config()
 
@@ -15,9 +18,13 @@ dotenv.config()
 // const express = require('express')
 const app = express()
 
-
 // if PORT in the .env is not set, PORT defaults to 3000
 const PORT = process.env.PORT || 3000
+
+// get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
 
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
@@ -64,7 +71,8 @@ app.get('/blog-entry', (req, res) => {
 })
 
 // route for posting a blog entry
-app.post('submit-blog', (req, res) => {
+app.post('/submit-blog', (req, res) => {
+
     // to use body-parser middleware to parse form data
     const { title, content } = req.body
 
@@ -74,8 +82,8 @@ app.post('submit-blog', (req, res) => {
     // read existing blog entries
     fs.readFile(blogsPath, 'utf8', (err, data) => {
         if (err) {
-            console.error(err)
-            return res.status(500).send('Eorr reading blog entries')
+            console.error('Error reading blog entries:', err)
+            return res.status(500).send('Error reading blog entries')
         }
 
         // parse existing blog entries
@@ -99,7 +107,6 @@ app.post('submit-blog', (req, res) => {
         })
     })
 })
-
 
 // Catch-all route for handling 404 errors
 app.use((req, res) => {
