@@ -5,13 +5,27 @@
 </head>
 <body>
     <h1>Blogs</h1>
-    <ul>
+    <!-- SIMPLE LIST OF ENTRIES 
+        
+        <ul>
         <% blogs.forEach(function(blog) { %>
             <li>
                 <h2><%= blog.title %></h2>
                 <p><%= blog.content %></p>
             </li>
         <% }); %>
+    </ul> -->
+
+    <ul>
+        <% blogs.forEach(function(blog, index) { %>
+            <li>
+                <h2><a href="/edit-blog/<%= index %>"><%= blog.title %></a></h2>
+                <p><%= blog.content %></p>
+            </li>
+        <% }) %>
     </ul>
+
+
+    
 </body>
 </html>

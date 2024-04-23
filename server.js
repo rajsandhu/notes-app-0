@@ -130,6 +130,37 @@ app.get('/blogs', (req, res) => {
     res.render('blogs', {blogs: blogs})
 })
 
+// captures the index of the blog entry and renders an edit page with the blog data prepopulated
+app.get('/edit-blog/:index', (req, res) => {
+    const index = req.params.index
+    const blogsPath = path.join(__dirname, 'blogs.json')
+    const data = fs.readFileSync(blogsPath, 'utf8')
+    const blogs = JSON.parse(data)
+
+    if (index >= 0 && index < blogs.length) {
+        res.render('edit-blog-entry', { blog: blogs[index], index: index })
+    } else {
+        res.status(404).send('Blog not found')
+    }
+})
+
+// handles form submission from the edit page
+app.post('/update-blog/:index', (req, res) => {
+    const index = req.params.index;
+    const { content } = req.body;
+    const blogsPath = path.join(__dirname, 'blogs.json');
+    const data = fs.readFileSync(blogsPath, 'utf8');
+    let blogs = JSON.parse(data);
+
+    if (index >= 0 && index < blogs.length) {
+        blogs[index].content = content; // Update the content
+        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8');
+        res.redirect('/blogs');
+    } else {
+        res.status(404).send('Blog not found');
+    }
+});
+
 
 
 // Catch-all route for handling 404 errors
