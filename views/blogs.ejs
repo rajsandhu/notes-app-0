@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blogs</title>
+</head>
+<body>
+    <h1>Blogs</h1>
+    <ul>
+        <% blogs.forEach(function(blog) { %>
+            <li>
+                <h2><%= blog.title %></h2>
+                <p><%= blog.content %></p>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>

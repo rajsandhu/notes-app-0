@@ -108,6 +108,23 @@ app.post('/submit-blog', (req, res) => {
     })
 })
 
+// trivial first route for displaying all blog entries
+app.get('/blogs', (req, res) => {
+
+    // where the blog entry is stored locally
+    const blogsPath = path.join(__dirname, 'blogs.json')
+
+    function getBlogs() {
+        const data = fs.readFileSync(blogsPath, 'utf8')
+        return JSON.parse(data)
+    }
+
+    const blogs = getBlogs()
+    res.render('blogs', {blogs: blogs})
+})
+
+
+
 // Catch-all route for handling 404 errors
 app.use((req, res) => {
     res.status(404).sendFile(__dirname + '/public/404.html')
