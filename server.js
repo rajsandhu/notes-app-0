@@ -28,6 +28,7 @@ const __dirname = dirname(__filename)
 
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
+app.set('views', path.join(__dirname, 'views'))
 
 // add logger functionality
 app.use(logger)
@@ -37,6 +38,8 @@ app.use(json())
 app.use(urlencoded({ extended: true }))
 
 // Route for the home page
+// -------
+// with res.sendFile it uses index.html, with res.render, it uses index.ejs
 // app.get('/', (req, res) => {
 //     res.sendFile(__dirname + '/public/index.html')
 // })
@@ -47,17 +50,20 @@ app.get('/', (req, res) => {
 
 
 app.get('/contact', (req, res) => {
-    res.sendFile(__dirname + '/public/contact.html')
+    // res.sendFile(__dirname + '/public/contact.html')
+    res.render('contact')
 })
 
 // route for the legal information page
 app.get('/legal', (req, res) => {
-    res.sendFile(__dirname + '/public/legal.html')
+    // res.sendFile(__dirname + '/public/legal.html')
+    res.render('legal')
 })
 
 // route for the 404 page
 app.get('/404', (req, res) => {
-    res.sendFile(__dirname + '/public/404.html')
+    // res.sendFile(__dirname + '/public/404.html')
+    res.render('404')
 })
 
 // TEST ROUTE
@@ -67,7 +73,8 @@ app.get('/test', (req, res) => {
 
 // blog entry, initially for local storage of entered data
 app.get('/blog-entry', (req, res) => {
-    res.sendFile(__dirname + '/public/blog-entry.html')
+    // res.sendFile(__dirname + '/public/blog-entry.html')
+    res.render('blog-entry')
 })
 
 // route for posting a blog entry
@@ -127,7 +134,9 @@ app.get('/blogs', (req, res) => {
 
 // Catch-all route for handling 404 errors
 app.use((req, res) => {
-    res.status(404).sendFile(__dirname + '/public/404.html')
+    // res.status(404).sendFile(__dirname + '/public/404.html')
+    res.status(404).render('404')
+
 })
 
 app.listen(PORT, () => {

@@ -1,27 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes App - Login</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+  <%- include('partials/head') %>
 <body>
-    <header>
-        <h1>Welcome to the Notes App</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="/legal">Legal</a></li>
-            </ul>
-        </nav>
-    </header>
+  <%- include('partials/header') %>
     <main>
         <h2>Login</h2>
-        <form action="/login" method="POST">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
+        <form action="/blog-entry" method="GET">
+
+        <!-- <form action="/login" method="POST"> -->
+            <!-- <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required> -->
+
+<!-- MAKE EMAIL AND PASSWORD TEMPORARILY NOT REQUIRED FOR FASTER DEVELOPMENT... TODO: MAKE THEM REQUIRED AGAIN -->          
+            <input type="email" name="email" placeholder="Email">
+            <input type="password" name="password" placeholder="Password">
             <button type="submit">Login</button>
             <button type="button" onclick="location.href='/forgot-password'">Forgot Password?</button>
         </form>
