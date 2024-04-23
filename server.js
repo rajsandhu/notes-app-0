@@ -146,21 +146,35 @@ app.get('/edit-blog/:index', (req, res) => {
 
 // handles form submission from the edit page
 app.post('/update-blog/:index', (req, res) => {
-    const index = req.params.index;
-    const { content } = req.body;
-    const blogsPath = path.join(__dirname, 'blogs.json');
-    const data = fs.readFileSync(blogsPath, 'utf8');
-    let blogs = JSON.parse(data);
+    const index = req.params.index
+    const { content } = req.body
+    const blogsPath = path.join(__dirname, 'blogs.json')
+    const data = fs.readFileSync(blogsPath, 'utf8')
+    let blogs = JSON.parse(data)
 
     if (index >= 0 && index < blogs.length) {
-        blogs[index].content = content; // Update the content
+        blogs[index].content = content // Update the content
+        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
+        res.redirect('/blogs')
+    } else {
+        res.status(404).send('Blog not found')
+    }
+})
+
+app.post('/delete-blog/:index', (req, res) => {
+    const index = parseInt(req.params.index)
+    const blogsPath = path.join(__dirname, 'blogs.json')
+    const data = fs.readFileSync(blogsPath, 'utf8')
+    let blogs = JSON.parse(data)
+    
+    if (index >= 0 && index < blogs.length) {
+        blogs.splice(index, 1); // Remove the blog entry
         fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8');
         res.redirect('/blogs');
     } else {
         res.status(404).send('Blog not found');
     }
 });
-
 
 
 // Catch-all route for handling 404 errors

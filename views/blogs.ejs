@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Blogs</title>
-</head>
+<html lang="en">
+  <%- include('partials/head') %>
 <body>
+  <%- include('partials/header') %>
     <h1>Blogs</h1>
     <!-- SIMPLE LIST OF ENTRIES 
         
@@ -21,6 +20,10 @@
             <li>
                 <h2><a href="/edit-blog/<%= index %>"><%= blog.title %></a></h2>
                 <p><%= blog.content %></p>
+                <!-- Add a form for deletion -->
+                <form action="/delete-blog/<%= index %>" method="POST">
+                    <button type="submit">Delete</button>
+                </form>
             </li>
         <% }) %>
     </ul>
