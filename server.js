@@ -1,5 +1,6 @@
 import express from 'express'
 import { logger } from './middlewares/logger.js'
+import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
 // for form handling
 import fs from 'fs'
@@ -14,6 +15,12 @@ import { dirname } from 'path'
 dotenv.config()
 
 // require('dotenv').config()
+
+
+// connection string to mongodb atlas using env variables for security
+const connectionString = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.qiwmyxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+
+const client = new MongoClient(connectionString, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // const express = require('express')
 const app = express()
@@ -77,43 +84,69 @@ app.get('/blog-entry', (req, res) => {
     res.render('blog-entry')
 })
 
+// A LOCAL STORAGE ROUTE
 // route for posting a blog entry
-app.post('/submit-blog', (req, res) => {
+// app.post('/submit-blog', (req, res) => {
 
-    // to use body-parser middleware to parse form data
-    const { title, content } = req.body
+//     // to use body-parser middleware to parse form data
+//     const { title, content } = req.body
+//     // where the blog entry will be stored locally
+//     const blogsPath = path.join(__dirname, 'blogs.json')
+//     // read existing blog entries
+//     fs.readFile(blogsPath, 'utf8', (err, data) => {
+//         if (err) {
+//             console.error('Error reading blog entries:', err)
+//             return res.status(500).send('Error reading blog entries')
+//         }
+//         // parse existing blog entries
+//         let blogs = []
+//         if (data) {
+//             blogs = JSON.parse(data)
+//         }
+//         // add the new blog entry
+//         blogs.push({ title, content })
+//         // write the updated blog entries back to the file
+//         fs.writeFile(blogsPath, JSON.stringify(blogs, null, 2), 'utf8', (err) => {
+//             if (err) {
+//                 console.error(err)
+//                 return res.status(500).send('Error saving blog entry')
+//             }
+//             // redirect user to either a success page or back to the form
+//             res.redirect('/blog-entry')
+//         })
+//     })
+// })
 
-    // where the blog entry will be stored locally
-    const blogsPath = path.join(__dirname, 'blogs.json')
+// REMOTE ATLASDB STORAGE ROUTE
+app.post('/submit-blog', async (req, res) => {
+    const { title, content } = req.body;
+    try {
+      await client.connect();
+      const db = client.db('blogdb');
+      const collection = db.collection('blogs')
+      await collection.insertOne({ title, content })
+      res.redirect('/blog-entry')
+    } catch (err) {
+      console.error(err)
+      res.status(500).send('Error saving blog entry')
+    } finally {
+      await client.close()
+    }
+  })
 
-    // read existing blog entries
-    fs.readFile(blogsPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading blog entries:', err)
-            return res.status(500).send('Error reading blog entries')
-        }
+// CLOSING REMOTE CONNECTION
+process.on('SIGINT', async () => {
+    try {
+      await client.close()
+      console.log('MongoDB connection closed')
+      process.exit(0)
+    } catch (err) {
+      console.error(err)
+      process.exit(1)
+    }
+  })
 
-        // parse existing blog entries
-        let blogs = []
-        if (data) {
-            blogs = JSON.parse(data)
-        }
 
-        // add the new blog entry
-        blogs.push({ title, content })
-
-        // write the updated blog entries back to the file
-        fs.writeFile(blogsPath, JSON.stringify(blogs, null, 2), 'utf8', (err) => {
-            if (err) {
-                console.error(err)
-                return res.status(500).send('Error saving blog entry')
-            }
-
-            // redirect user to either a success page or back to the form
-            res.redirect('/blog-entry')
-        })
-    })
-})
 
 // trivial first route for displaying all blog entries
 app.get('/blogs', (req, res) => {
@@ -166,13 +199,13 @@ app.post('/delete-blog/:index', (req, res) => {
     const blogsPath = path.join(__dirname, 'blogs.json')
     const data = fs.readFileSync(blogsPath, 'utf8')
     let blogs = JSON.parse(data)
-    
+
     if (index >= 0 && index < blogs.length) {
         blogs.splice(index, 1); // Remove the blog entry
-        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8');
-        res.redirect('/blogs');
+        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
+        res.redirect('/blogs')
     } else {
-        res.status(404).send('Blog not found');
+        res.status(404).send('Blog not found')
     }
 });
 

@@ -1,4 +1,11 @@
 <!-- edit-blog-entry.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head') %>
+<body>
+  <%- include('partials/header') %>
+
+
 <form action="/update-blog/<%= index %>" method="POST">
   <input type="text" name="title" value="<%= blog.title %>" readonly>
   <textarea name="content"><%= blog.content %></textarea>
