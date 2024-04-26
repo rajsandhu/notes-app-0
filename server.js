@@ -1,4 +1,11 @@
 import express from 'express'
+
+// for users and sessions
+import mongoose from 'mongoose'
+import session from 'express-session'
+import User from './models/user.js'
+
+
 import { logger } from './middlewares/logger.js'
 import { MongoClient } from 'mongodb'
 import { ObjectId } from 'mongodb'
@@ -15,9 +22,6 @@ import { dirname } from 'path'
 
 dotenv.config()
 
-// require('dotenv').config()
-
-
 // (REMOTE) connection string to mongodb atlas using env variables for security
 const connectionString = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.qiwmyxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 const client = new MongoClient(connectionString, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -32,6 +36,13 @@ const PORT = process.env.PORT || 3000
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// creating default user
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('MongoDB connected');
+    createDefaultUser();  // Seed the default user
+  })
+  .catch(err => console.error('MongoDB connection error:', err));
 
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
@@ -39,6 +50,35 @@ app.set('views', path.join(__dirname, 'views'))
 
 // add logger functionality
 app.use(logger)
+
+// user functionality
+app.use(session({
+    secret: 'your_secret_key', // Change this to a real secret in production
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: 'auto' }
+  }))
+
+  // create default user
+  async function createDefaultUser() {
+    try {
+      const defaultUser = await User.findOne({ username: `${process.env.DEV_USERNAME}` })
+      if (!defaultUser) {
+        const newUser = new User({
+          username: `${process.env.DEV_USERNAME}`,
+          password: `${process.env.DEV_PASSWORD}`  // CHANGE PASSWORD IN PRODUCTION
+        });
+        await newUser.save()
+        console.log('Default user created')
+      }
+    } catch (err) {
+      console.error('Error creating default user:', err)
+    }
+  }
+
+
+
+
 
 // use built-in express body-parser middleware
 app.use(json())
@@ -54,6 +94,33 @@ app.get('/', (req, res) => {
     res.render('index')
     console.log('rendering ejs index')
 })
+
+// POST route for handling login submissions
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username })
+  
+    if (user && await user.comparePassword(password)) {
+      req.session.userId = user._id; // Set user ID in session
+      res.redirect('/dashboard'); // Redirect to a protected page
+    } else {
+      res.status(401).send('Authentication failed')
+    }
+  })
+
+  function requireLogin(req, res, next) {
+    if (!req.session.userId) {
+      res.redirect('/login')
+    } else {
+      next()
+    }
+  }
+  
+  // Example of a protected route
+  app.get('/dashboard', requireLogin, (req, res) => {
+    res.send('Welcome to your dashboard')
+  })
+
 
 
 app.get('/contact', (req, res) => {
