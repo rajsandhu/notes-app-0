@@ -163,6 +163,8 @@ process.on('SIGINT', async () => {
 //     res.render('blogs', {blogs: blogs})
 // })
 
+
+
 // (REMOTE) DISPLAY REMOTELY STORED BLOG ENTRIES -- R (READ) of CRUD
 app.get('/blogs', async (req, res) => {
     try {
@@ -298,21 +300,37 @@ app.get('/edit-blog/:id', async (req, res) => {
     }
   });
 
-
-app.post('/delete-blog/:index', (req, res) => {
-    const index = parseInt(req.params.index)
-    const blogsPath = path.join(__dirname, 'blogs.json')
-    const data = fs.readFileSync(blogsPath, 'utf8')
-    let blogs = JSON.parse(data)
-
-    if (index >= 0 && index < blogs.length) {
-        blogs.splice(index, 1); // Remove the blog entry
-        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
-        res.redirect('/blogs')
-    } else {
-        res.status(404).send('Blog not found')
+  // D (DELETE) of CRUD
+  app.post('/delete-blog/:id', async (req, res) => {
+    const id = req.params.id;
+    try {
+      await client.connect();
+      const db = client.db('blogdb');
+      const collection = db.collection('blogs');
+      await collection.deleteOne({ _id: new ObjectId(id) });
+      res.redirect('/blogs');  // Redirect to the list of blogs after deletion
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error deleting blog entry');
+    } finally {
+      await client.close();
     }
-});
+  });  
+
+// app.post('/delete-blog/:index', (req, res) => {
+//     const index = parseInt(req.params.index)
+//     const blogsPath = path.join(__dirname, 'blogs.json')
+//     const data = fs.readFileSync(blogsPath, 'utf8')
+//     let blogs = JSON.parse(data)
+
+//     if (index >= 0 && index < blogs.length) {
+//         blogs.splice(index, 1); // Remove the blog entry
+//         fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
+//         res.redirect('/blogs')
+//     } else {
+//         res.status(404).send('Blog not found')
+//     }
+// });
 
 
 // Catch-all route for handling 404 errors

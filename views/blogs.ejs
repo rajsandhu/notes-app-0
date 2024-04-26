@@ -3,12 +3,20 @@
   <%- include('partials/head') %>
 <body>
   <%- include('partials/header') %>
+
+  <!-- Make New Blog button -->
+  <form action="/blog-entry" method="GET">
+    <button type="submit">Make New Blog</button>
+  </form>
+  <ul>
+
+
+
       <h1>Blogs</h1>
       <ul>
         <% blogs.forEach(function(blog) { %>
           <li>
-            <h2><%= blog.title %></h2>
-            <p><%= blog.content %></p>
+            <h2><a href="/edit-blog/<%= blog._id %>"><%= blog.title %></a></h2>            <p><%= blog.content %></p>
             <!-- Form to edit this specific blog -->
             <form action="/edit-blog/<%= blog._id %>" method="POST">
               <div>
@@ -21,6 +29,11 @@
               </div>
               <button type="submit">Update</button>
             </form>
+        <!-- Delete button -->
+        <form action="/delete-blog/<%= blog._id %>" method="POST">
+            <button type="submit">Delete</button>
+
+
           </li>
         <% }); %>
       </ul>
