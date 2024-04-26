@@ -1,0 +1,23 @@
+<!-- edit-blog-entry.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head') %>
+<body>
+  <%- include('partials/header') %>
+
+  <form action="/edit-blog/<%= blog._id %>" method="POST">
+    <div>
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" value="<%= blog.title %>" required>
+    </div>
+    <div>
+      <label for="content">Content:</label>
+      <textarea id="content" name="content" required><%= blog.content %></textarea>
+    </div>
+    <button type="submit">Update</button>
+  </form>    
+
+
+
+</body>
+</html>

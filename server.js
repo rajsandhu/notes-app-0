@@ -1,6 +1,7 @@
 import express from 'express'
 import { logger } from './middlewares/logger.js'
 import { MongoClient } from 'mongodb'
+import { ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 // for form handling
 import fs from 'fs'
@@ -17,9 +18,8 @@ dotenv.config()
 // require('dotenv').config()
 
 
-// connection string to mongodb atlas using env variables for security
+// (REMOTE) connection string to mongodb atlas using env variables for security
 const connectionString = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.qiwmyxx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-
 const client = new MongoClient(connectionString, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // const express = require('express')
@@ -73,7 +73,7 @@ app.get('/404', (req, res) => {
     res.render('404')
 })
 
-// TEST ROUTE
+// test route
 app.get('/test', (req, res) => {
     res.send('Test route')
 })
@@ -117,7 +117,7 @@ app.get('/blog-entry', (req, res) => {
 //     })
 // })
 
-// REMOTE ATLASDB STORAGE ROUTE
+// (REMOTE) REMOTE ATLASDB STORAGE ROUTE  -- C (CREATE) of CRUD
 app.post('/submit-blog', async (req, res) => {
     const { title, content } = req.body;
     try {
@@ -134,7 +134,7 @@ app.post('/submit-blog', async (req, res) => {
     }
   })
 
-// CLOSING REMOTE CONNECTION
+// (REMOTE) CLOSE MONGODB CLIENT CONNECTION BEFORE NODE APP EXITS
 process.on('SIGINT', async () => {
     try {
       await client.close()
@@ -147,52 +147,157 @@ process.on('SIGINT', async () => {
   })
 
 
-
+// (LOCAL) ROUTE FOR DISPLAY OF LOCALLY STORED BLOG ENTRIES
 // trivial first route for displaying all blog entries
-app.get('/blogs', (req, res) => {
+// app.get('/blogs', (req, res) => {
 
-    // where the blog entry is stored locally
-    const blogsPath = path.join(__dirname, 'blogs.json')
+//     // where the blog entry is stored locally
+//     const blogsPath = path.join(__dirname, 'blogs.json')
 
-    function getBlogs() {
-        const data = fs.readFileSync(blogsPath, 'utf8')
-        return JSON.parse(data)
+//     function getBlogs() {
+//         const data = fs.readFileSync(blogsPath, 'utf8')
+//         return JSON.parse(data)
+//     }
+
+//     const blogs = getBlogs()
+//     res.render('blogs', {blogs: blogs})
+// })
+
+// (REMOTE) DISPLAY REMOTELY STORED BLOG ENTRIES -- R (READ) of CRUD
+app.get('/blogs', async (req, res) => {
+    try {
+      await client.connect()
+      const db = client.db('blogdb')
+      const collection = db.collection('blogs')
+      const blogs = await collection.find().toArray()
+      res.render('blogs', { blogs: blogs })
+    } catch (err) {
+      console.error(err)
+      res.status(500).send('Error retrieving blog entries')
+    } finally {
+      await client.close()
     }
-
-    const blogs = getBlogs()
-    res.render('blogs', {blogs: blogs})
-})
+  })
 
 // captures the index of the blog entry and renders an edit page with the blog data prepopulated
-app.get('/edit-blog/:index', (req, res) => {
-    const index = req.params.index
-    const blogsPath = path.join(__dirname, 'blogs.json')
-    const data = fs.readFileSync(blogsPath, 'utf8')
-    const blogs = JSON.parse(data)
+// app.get('/edit-blog/:index', (req, res) => {
+//     const index = req.params.index
+//     const blogsPath = path.join(__dirname, 'blogs.json')
+//     const data = fs.readFileSync(blogsPath, 'utf8')
+//     const blogs = JSON.parse(data)
 
-    if (index >= 0 && index < blogs.length) {
-        res.render('edit-blog-entry', { blog: blogs[index], index: index })
-    } else {
-        res.status(404).send('Blog not found')
+//     if (index >= 0 && index < blogs.length) {
+//         res.render('edit-blog-entry', { blog: blogs[index], index: index })
+//     } else {
+//         res.status(404).send('Blog not found')
+//     }
+// })
+
+// (REMOTE) DISPLAY REMOTELY STORED BLOG ENTRIES -- U (UPDATE 1/2) of CRUD
+
+// app.get('/edit-blog/:id', async (req, res) => {
+//     const id = req.params.id;
+//     try {
+//       await client.connect();
+//       const db = client.db('blogdb');
+//       const collection = db.collection('blogs');
+//       const blog = await collection.findOne({ _id: new ObjectId(id) });
+//       if (blog) {
+//         res.render('edit-blog', { blog: blog });
+//       } else {
+//         res.status(404).send('Blog not found');
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       res.status(500).send('Error retrieving blog entry');
+//     } finally {
+//       await client.close();
+//     }
+//   });
+
+app.post('/edit-blog/:id', async (req, res) => {
+    const id = req.params.id;
+    const { title, content } = req.body;
+    try {
+      await client.connect();
+      const db = client.db('blogdb');
+      const collection = db.collection('blogs');
+      await collection.updateOne({ _id: new ObjectId(id) }, { $set: { title, content } });
+      res.redirect('/blogs');
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error updating blog entry');
+    } finally {
+      await client.close();
     }
-})
+  });
+
+
 
 // handles form submission from the edit page
-app.post('/update-blog/:index', (req, res) => {
-    const index = req.params.index
-    const { content } = req.body
-    const blogsPath = path.join(__dirname, 'blogs.json')
-    const data = fs.readFileSync(blogsPath, 'utf8')
-    let blogs = JSON.parse(data)
+// app.post('/update-blog/:index', (req, res) => {
+//     const index = req.params.index
+//     const { content } = req.body
+//     const blogsPath = path.join(__dirname, 'blogs.json')
+//     const data = fs.readFileSync(blogsPath, 'utf8')
+//     let blogs = JSON.parse(data)
 
-    if (index >= 0 && index < blogs.length) {
-        blogs[index].content = content // Update the content
-        fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
-        res.redirect('/blogs')
-    } else {
-        res.status(404).send('Blog not found')
+//     if (index >= 0 && index < blogs.length) {
+//         blogs[index].content = content // Update the content
+//         fs.writeFileSync(blogsPath, JSON.stringify(blogs, null, 2), 'utf8')
+//         res.redirect('/blogs')
+//     } else {
+//         res.status(404).send('Blog not found')
+//     }
+// })
+
+// (REMOTE) EDIT A BLOG ENTRY -- U (UPDATE 2/2) of CRUD
+
+
+// app.get('/edit-blog/:index', async (req, res) => {
+//     const index = req.params.index
+//     try {
+//       await client.connect()
+//       const db = client.db('blogdb')
+//       const collection = db.collection('blogs')
+//       const blog = await collection.findOne({ _id: new ObjectId(index) })
+//       if (blog) {
+//         res.render('edit-blog', { blog: blog })
+//       } else {
+//         res.status(404).send('Blog not found')
+//       }
+//     } catch (err) {
+//       console.error(err)
+//       res.status(500).send('Error retrieving blog entry')
+//     } finally {
+//       await client.close()
+//     }
+//   });
+
+app.get('/edit-blog/:id', async (req, res) => {
+    const id = req.params.id;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send('Invalid ID format');
     }
-})
+
+    try {
+      await client.connect();
+      const db = client.db('blogdb');
+      const collection = db.collection('blogs');
+      const blog = await collection.findOne({ _id: new ObjectId(id) });
+      if (blog) {
+        res.render('edit-blog', { blog: blog });
+      } else {
+        res.status(404).send('Blog not found');
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error retrieving blog entry');
+    } finally {
+      await client.close();
+    }
+  });
+
 
 app.post('/delete-blog/:index', (req, res) => {
     const index = parseInt(req.params.index)
